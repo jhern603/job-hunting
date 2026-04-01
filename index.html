@@ -9,6 +9,14 @@
   header{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
   header h1{font-size:18px;font-weight:600;color:#f0f6fc}
   .pill{background:#21262d;border:1px solid #30363d;border-radius:20px;padding:2px 10px;font-size:12px;color:#8b949e}
+  /* Tabs */
+  .tab-bar{display:flex;background:#161b22;border-bottom:2px solid #30363d;padding:0 24px}
+  .tab-btn{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:#8b949e;font-size:14px;font-weight:500;padding:12px 20px;cursor:pointer}
+  .tab-btn:hover{color:#e1e4e8}
+  .tab-btn.active{color:#f0f6fc;border-bottom-color:#58a6ff}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  /* Controls */
   .controls{padding:16px 24px;display:flex;gap:10px;flex-wrap:wrap;background:#0f1117;border-bottom:1px solid #21262d}
   input[type=search],select{background:#21262d;border:1px solid #30363d;color:#e1e4e8;border-radius:6px;padding:6px 10px;font-size:13px;outline:none}
   input[type=search]:focus,select:focus{border-color:#58a6ff}
@@ -21,6 +29,7 @@
   .btn-ghost:hover{background:#21262d;color:#e1e4e8}
   .btn-danger{background:#da3633;color:#fff}
   .btn-danger:hover{background:#f85149}
+  /* Table */
   .table-wrap{overflow-x:auto;padding:0 24px 24px}
   table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;margin-top:16px}
   th{background:#161b22;color:#8b949e;font-weight:600;text-align:left;padding:8px 12px;border-bottom:2px solid #30363d;white-space:nowrap;user-select:none;cursor:pointer}
@@ -56,13 +65,21 @@
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
   .close-btn{position:absolute;top:14px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;line-height:1}
   .close-btn:hover{color:#e1e4e8}
+  /* Stats */
   .stats{display:flex;gap:12px;padding:12px 24px;flex-wrap:wrap}
   .stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 16px;text-align:center;min-width:80px}
   .stat-num{font-size:22px;font-weight:700;color:#f0f6fc}
   .stat-label{font-size:11px;color:#8b949e;margin-top:2px}
+  /* Sankey */
+  #sankey-wrap{padding:24px;overflow-x:auto}
+  #sankey-svg{display:block}
+  .sankey-link{fill:none;stroke-opacity:0.25;transition:stroke-opacity 0.15s}
+  .sankey-link:hover{stroke-opacity:0.55}
+  .sankey-empty{text-align:center;padding:60px;color:#8b949e}
 </style>
 </head>
 <body>
+
 <header>
   <h1>Job Hunt Tracker</h1>
   <span class="pill" id="total-pill">0 applications</span>
@@ -75,43 +92,57 @@
   <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVImport(event)">
 </header>
 
-<div class="stats" id="stats-row"></div>
-
-<div class="controls">
-  <input type="search" id="search" placeholder="Search company or role…" oninput="render()">
-  <select id="filter-status" onchange="render()">
-    <option value="">All statuses</option>
-    <option>Referral Requested</option><option>Applied</option><option>Phone Screen</option>
-    <option>Technical</option><option>Onsite</option><option>Offer</option>
-    <option>Rejected</option><option>Withdrawn</option><option>Ghosted</option>
-  </select>
-  <select id="filter-mode" onchange="render()">
-    <option value="">All work modes</option>
-    <option>Remote</option><option>Hybrid</option><option>Onsite</option>
-  </select>
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-btn-applications" onclick="switchTab('applications')">Applications</button>
+  <button class="tab-btn" id="tab-btn-pipeline" onclick="switchTab('pipeline')">Pipeline</button>
 </div>
 
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th onclick="sortBy('Company')">Company <span class="sort-icon">↕</span></th>
-        <th onclick="sortBy('Role')">Role <span class="sort-icon">↕</span></th>
-        <th onclick="sortBy('Date Applied')">Applied <span class="sort-icon">↕</span></th>
-        <th onclick="sortBy('Status')">Status <span class="sort-icon">↕</span></th>
-        <th>Work Mode</th>
-        <th>Referral</th>
-        <th onclick="sortBy('Date Decision')">Decide By <span class="sort-icon">↕</span></th>
-        <th>Offer</th>
-        <th style="width:80px"></th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
-  <div class="empty" id="empty" style="display:none">No applications yet. Click <b>+ Add Application</b> to get started, or <b>Import CSV</b> to load existing data.</div>
+<!-- Applications tab -->
+<div id="tab-applications" class="tab-panel active">
+  <div class="stats" id="stats-row"></div>
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search company or role…" oninput="render()">
+    <select id="filter-status" onchange="render()">
+      <option value="">All statuses</option>
+      <option>Referral Requested</option><option>Applied</option><option>Phone Screen</option>
+      <option>Technical</option><option>Onsite</option><option>Offer</option>
+      <option>Rejected</option><option>Withdrawn</option><option>Ghosted</option>
+    </select>
+    <select id="filter-mode" onchange="render()">
+      <option value="">All work modes</option>
+      <option>Remote</option><option>Hybrid</option><option>Onsite</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('Company')">Company <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('Role')">Role <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('Date Applied')">Applied <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('Status')">Status <span class="sort-icon">↕</span></th>
+          <th>Work Mode</th>
+          <th>Referral</th>
+          <th onclick="sortBy('Date Decision')">Decide By <span class="sort-icon">↕</span></th>
+          <th>Offer</th>
+          <th style="width:80px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">No applications yet. Click <b>+ Add Application</b> to get started, or <b>Import CSV</b> to load existing data.</div>
+  </div>
 </div>
 
-<!-- Modal -->
+<!-- Pipeline tab -->
+<div id="tab-pipeline" class="tab-panel">
+  <div id="sankey-wrap">
+    <svg id="sankey-svg"></svg>
+    <div class="sankey-empty" id="sankey-empty" style="display:none">Add applications to see your pipeline.</div>
+  </div>
+</div>
+
+<!-- Edit/Add Modal -->
 <div class="overlay" id="overlay" onclick="maybeClose(event)">
   <div class="modal" id="modal">
     <button class="close-btn" onclick="closeModal()">✕</button>
@@ -186,6 +217,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
 <script>
 const COLUMNS = [
   'Company','Role','Job URL','Location','Work Mode','Date Applied',
@@ -193,13 +226,14 @@ const COLUMNS = [
   'Date Technical Screen','Date Onsite / Final Round','Date Offer',
   'Date Decision','Offer Amount','Decision','Rejection Stage','Notes'
 ];
-
 const STORAGE_KEY = 'job-hunt-rows';
 
 let rows = [];
 let editIdx = null;
 let sortCol = 'Date Applied';
 let sortDir = -1;
+let activeTab = 'applications';
+let sankeyDirty = true;
 
 const STATUS_CLASS = {
   'Referral Requested':'s-referral','Applied':'s-applied','Phone Screen':'s-phone',
@@ -209,20 +243,17 @@ const STATUS_CLASS = {
 
 // --- Storage ---
 function loadRows() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
 }
-
 function saveRows() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+  sankeyDirty = true;
 }
 
-// --- CSV parsing (for import) ---
+// --- CSV ---
 function parseCSV(text) {
   const lines = text.trim().split('\n');
-  if (lines.length < 1) return [];
+  if (!lines.length) return [];
   const headers = parseRow(lines[0]);
   return lines.slice(1).filter(l => l.trim()).map(line => {
     const vals = parseRow(line);
@@ -231,277 +262,313 @@ function parseCSV(text) {
     return obj;
   });
 }
-
 function parseRow(line) {
-  const result = [];
-  let cur = '', inQuote = false;
+  const result = []; let cur = '', inQuote = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-    if (c === '"') {
-      if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuote = !inQuote;
-    } else if (c === ',' && !inQuote) {
-      result.push(cur); cur = '';
-    } else {
-      cur += c;
-    }
+    if (c === '"') { if (inQuote && line[i+1] === '"') { cur += '"'; i++; } else inQuote = !inQuote; }
+    else if (c === ',' && !inQuote) { result.push(cur); cur = ''; }
+    else cur += c;
   }
-  result.push(cur);
-  return result;
+  result.push(cur); return result;
 }
-
-// --- CSV export ---
 function toCSV(data) {
-  const esc = v => /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
-  const header = COLUMNS.join(',');
-  const body = data.map(r => COLUMNS.map(c => esc(r[c] || '')).join(','));
-  return [header, ...body].join('\n') + '\n';
+  const esc = v => /[",\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v;
+  return [COLUMNS.join(','), ...data.map(r => COLUMNS.map(c => esc(r[c]||'')).join(','))].join('\n') + '\n';
 }
-
 function exportCSV() {
-  const blob = new Blob([toCSV(rows)], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'tracker.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([toCSV(rows)], {type:'text/csv'})),
+    download: 'tracker.csv'
+  });
+  a.click(); URL.revokeObjectURL(a.href);
 }
-
-function importCSV() {
-  document.getElementById('csv-file-input').click();
-}
-
+function importCSV() { document.getElementById('csv-file-input').click(); }
 function handleCSVImport(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     const imported = parseCSV(ev.target.result);
-    if (imported.length === 0) { alert('No rows found in CSV.'); return; }
+    if (!imported.length) { alert('No rows found in CSV.'); return; }
     if (rows.length > 0) {
-      const choice = confirm(`Replace all ${rows.length} existing entries with ${imported.length} imported rows?\n\nClick OK to replace, Cancel to merge (add without duplicates).`);
-      if (choice) {
-        rows = imported;
-      } else {
-        // Merge: skip rows that match existing Company+Role+Date Applied
+      const replace = confirm(`Replace all ${rows.length} existing entries with ${imported.length} imported rows?\n\nOK = replace, Cancel = merge`);
+      if (replace) { rows = imported; }
+      else {
         const existing = new Set(rows.map(r => `${r.Company}|${r.Role}|${r['Date Applied']}`));
         const added = imported.filter(r => !existing.has(`${r.Company}|${r.Role}|${r['Date Applied']}`));
         rows.push(...added);
         alert(`Merged: added ${added.length} new rows, skipped ${imported.length - added.length} duplicates.`);
       }
-    } else {
-      rows = imported;
-    }
-    saveRows();
-    render();
+    } else rows = imported;
+    saveRows(); render();
   };
-  reader.readAsText(file);
-  e.target.value = '';
+  reader.readAsText(file); e.target.value = '';
 }
 
-// --- Render ---
+// --- Render table ---
 function render() {
   const q = document.getElementById('search').value.toLowerCase();
   const fStatus = document.getElementById('filter-status').value;
   const fMode = document.getElementById('filter-mode').value;
-
   let filtered = rows.filter(r => {
     if (q && !r.Company.toLowerCase().includes(q) && !r.Role.toLowerCase().includes(q)) return false;
     if (fStatus && r.Status !== fStatus) return false;
     if (fMode && r['Work Mode'] !== fMode) return false;
     return true;
   });
-
-  filtered.sort((a, b) => {
-    const av = a[sortCol] || '', bv = b[sortCol] || '';
+  filtered.sort((a,b) => {
+    const av = a[sortCol]||'', bv = b[sortCol]||'';
     return av < bv ? sortDir : av > bv ? -sortDir : 0;
   });
-
-  document.getElementById('total-pill').textContent = rows.length + ' application' + (rows.length !== 1 ? 's' : '');
-
+  document.getElementById('total-pill').textContent = rows.length + ' application' + (rows.length!==1?'s':'');
   const counts = {};
-  rows.forEach(r => counts[r.Status] = (counts[r.Status] || 0) + 1);
-  const statOrder = ['Referral Requested','Applied','Phone Screen','Technical','Onsite','Offer','Rejected'];
-  document.getElementById('stats-row').innerHTML = statOrder.map(s =>
+  rows.forEach(r => counts[r.Status] = (counts[r.Status]||0)+1);
+  document.getElementById('stats-row').innerHTML = ['Referral Requested','Applied','Phone Screen','Technical','Onsite','Offer','Rejected'].map(s =>
     `<div class="stat"><div class="stat-num">${counts[s]||0}</div><div class="stat-label">${s}</div></div>`
   ).join('');
-
-  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
-
   const tbody = document.getElementById('tbody');
-  if (filtered.length === 0) {
-    tbody.innerHTML = '';
-    document.getElementById('empty').style.display = '';
-    return;
-  }
-  document.getElementById('empty').style.display = 'none';
-
+  if (!filtered.length) { tbody.innerHTML=''; document.getElementById('empty').style.display=''; return; }
+  document.getElementById('empty').style.display='none';
   tbody.innerHTML = filtered.map(r => {
-    const realIdx = rows.indexOf(r);
+    const ri = rows.indexOf(r);
     const badge = r.Status ? `<span class="status-badge ${STATUS_CLASS[r.Status]||''}">${esc(r.Status)}</span>` : '';
     const link = r['Job URL'] ? `<a class="job-link" href="${esc(r['Job URL'])}" target="_blank" rel="noopener">${esc(r.Role)}</a>` : esc(r.Role);
     return `<tr>
-      <td><b>${esc(r.Company)}</b></td>
-      <td>${link}</td>
-      <td>${esc(r['Date Applied'])}</td>
-      <td>${badge}</td>
-      <td>${esc(r['Work Mode'])}</td>
-      <td>${esc(r['Referral Contact'])}</td>
+      <td><b>${esc(r.Company)}</b></td><td>${link}</td><td>${esc(r['Date Applied'])}</td><td>${badge}</td>
+      <td>${esc(r['Work Mode'])}</td><td>${esc(r['Referral Contact'])}</td>
       <td style="${isUrgent(r['Date Decision'])?'color:#fbbf24;font-weight:600':''}">${esc(r['Date Decision'])}</td>
       <td>${esc(r['Offer Amount'])}</td>
-      <td>
-        <button class="btn-ghost btn-sm" onclick="openEdit(${realIdx})">Edit</button>
-        <button class="btn-danger btn-sm" style="margin-left:4px" onclick="del(${realIdx})">✕</button>
-      </td>
-    </tr>`;
+      <td><button class="btn-ghost btn-sm" onclick="openEdit(${ri})">Edit</button>
+          <button class="btn-danger btn-sm" style="margin-left:4px" onclick="del(${ri})">✕</button></td></tr>`;
   }).join('');
 }
-
-function esc(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function isUrgent(d) {
-  if (!d) return false;
-  const diff = (new Date(d) - new Date()) / 86400000;
-  return diff >= 0 && diff <= 3;
-}
-
-function sortBy(col) {
-  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; }
-  render();
-}
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function isUrgent(d) { if(!d) return false; const diff=(new Date(d)-new Date())/86400000; return diff>=0&&diff<=3; }
+function sortBy(col) { if(sortCol===col) sortDir*=-1; else {sortCol=col;sortDir=-1;} render(); }
 
 // --- Modal ---
 function openAdd() {
-  editIdx = null;
-  document.getElementById('modal-title').textContent = 'Add Application';
-  const fields = ['Company','Role','Job URL','Location','Work Mode','Date Applied',
-    'Referral Contact','Status','Date Phone Screen','Date Technical Screen',
-    'Date Onsite / Final Round','Date Offer','Date Decision','Offer Amount','Decision',
-    'Rejection Stage','Notes'];
-  fields.forEach(f => { const el = document.getElementById('f-'+f); if(el) el.value = f==='Status'?'Applied':''; });
-  document.getElementById('f-Date Applied').value = new Date().toISOString().split('T')[0];
+  editIdx=null;
+  document.getElementById('modal-title').textContent='Add Application';
+  ['Company','Role','Job URL','Location','Work Mode','Date Applied','Referral Contact','Status',
+   'Date Phone Screen','Date Technical Screen','Date Onsite / Final Round','Date Offer',
+   'Date Decision','Offer Amount','Decision','Rejection Stage','Notes'].forEach(f => {
+    const el=document.getElementById('f-'+f); if(el) el.value=f==='Status'?'Applied':'';
+  });
+  document.getElementById('f-Date Applied').value=new Date().toISOString().split('T')[0];
   document.getElementById('overlay').classList.add('open');
 }
-
 function openEdit(idx) {
-  editIdx = idx;
-  document.getElementById('modal-title').textContent = 'Edit Application';
-  const r = rows[idx];
-  Object.keys(r).forEach(f => { const el = document.getElementById('f-'+f); if(el) el.value = r[f]||''; });
+  editIdx=idx;
+  document.getElementById('modal-title').textContent='Edit Application';
+  const r=rows[idx];
+  Object.keys(r).forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=r[f]||'';});
   document.getElementById('overlay').classList.add('open');
 }
-
 function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-function maybeClose(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
-
+function maybeClose(e) { if(e.target===document.getElementById('overlay')) closeModal(); }
 function save() {
-  const company = document.getElementById('f-Company').value.trim();
-  const role = document.getElementById('f-Role').value.trim();
-  if (!company || !role) { alert('Company and Role are required.'); return; }
-
-  const fields = ['Company','Role','Job URL','Location','Work Mode','Date Applied',
-    'Referral Contact','Status','Date Phone Screen','Date Technical Screen',
-    'Date Onsite / Final Round','Date Offer','Date Decision','Offer Amount','Decision',
-    'Rejection Stage','Notes'];
-  const obj = {};
-  fields.forEach(f => { const el = document.getElementById('f-'+f); obj[f] = el ? el.value : ''; });
-
-  if (editIdx !== null) rows[editIdx] = obj; else rows.push(obj);
-  saveRows();
-  closeModal();
-  render();
+  const company=document.getElementById('f-Company').value.trim();
+  const role=document.getElementById('f-Role').value.trim();
+  if(!company||!role){alert('Company and Role are required.');return;}
+  const obj={};
+  ['Company','Role','Job URL','Location','Work Mode','Date Applied','Referral Contact','Status',
+   'Date Phone Screen','Date Technical Screen','Date Onsite / Final Round','Date Offer',
+   'Date Decision','Offer Amount','Decision','Rejection Stage','Notes'].forEach(f=>{
+    const el=document.getElementById('f-'+f); obj[f]=el?el.value:'';
+  });
+  if(editIdx!==null) rows[editIdx]=obj; else rows.push(obj);
+  saveRows(); closeModal(); render();
 }
-
 function del(idx) {
-  if (!confirm(`Delete ${rows[idx].Company} – ${rows[idx].Role}?`)) return;
-  rows.splice(idx, 1);
-  saveRows();
-  render();
+  if(!confirm(`Delete ${rows[idx].Company} – ${rows[idx].Role}?`)) return;
+  rows.splice(idx,1); saveRows(); render();
 }
 
 // --- Bulk Add ---
-const BULK_STATUS_OPTS = ['Referral Requested','Applied','Phone Screen','Technical','Onsite','Offer','Rejected','Withdrawn','Ghosted'];
-const BULK_MODE_OPTS = ['','Remote','Hybrid','Onsite'];
-let bulkRowCount = 0;
-
-function bulkCellInput(name, rowId, placeholder='') {
-  return `<input data-row="${rowId}" data-field="${name}" placeholder="${placeholder}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e1e4e8;border-radius:4px;padding:5px 7px;font-size:12px;outline:none;font-family:inherit">`;
-}
-function bulkCellSelect(name, rowId, opts, defaultVal='') {
-  const options = opts.map(o => `<option${o===defaultVal?' selected':''}>${o}</option>`).join('');
-  return `<select data-row="${rowId}" data-field="${name}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e1e4e8;border-radius:4px;padding:5px 6px;font-size:12px;outline:none">${options}</select>`;
-}
-
-function addBulkRow() {
-  const id = ++bulkRowCount;
-  const today = new Date().toISOString().split('T')[0];
-  const tr = document.createElement('tr');
-  tr.id = 'bulk-row-' + id;
-  tr.innerHTML = `
-    <td style="padding:4px 6px">${bulkCellInput('Role', id, 'Software Engineer')}</td>
-    <td style="padding:4px 6px">${bulkCellInput('Location', id, 'Remote / City')}</td>
-    <td style="padding:4px 6px">${bulkCellSelect('Work Mode', id, BULK_MODE_OPTS)}</td>
-    <td style="padding:4px 6px">${bulkCellSelect('Status', id, BULK_STATUS_OPTS, 'Applied')}</td>
+const BULK_STATUS_OPTS=['Referral Requested','Applied','Phone Screen','Technical','Onsite','Offer','Rejected','Withdrawn','Ghosted'];
+const BULK_MODE_OPTS=['','Remote','Hybrid','Onsite'];
+let bulkRowCount=0;
+function bulkCellInput(name,id,ph=''){return `<input data-row="${id}" data-field="${name}" placeholder="${ph}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e1e4e8;border-radius:4px;padding:5px 7px;font-size:12px;outline:none;font-family:inherit">`;}
+function bulkCellSelect(name,id,opts,def=''){const o=opts.map(o=>`<option${o===def?' selected':''}>${o}</option>`).join('');return `<select data-row="${id}" data-field="${name}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e1e4e8;border-radius:4px;padding:5px 6px;font-size:12px;outline:none">${o}</select>`;}
+function addBulkRow(){
+  const id=++bulkRowCount, today=new Date().toISOString().split('T')[0];
+  const tr=document.createElement('tr'); tr.id='bulk-row-'+id;
+  tr.innerHTML=`<td style="padding:4px 6px">${bulkCellInput('Role',id,'Software Engineer')}</td>
+    <td style="padding:4px 6px">${bulkCellInput('Location',id,'Remote / City')}</td>
+    <td style="padding:4px 6px">${bulkCellSelect('Work Mode',id,BULK_MODE_OPTS)}</td>
+    <td style="padding:4px 6px">${bulkCellSelect('Status',id,BULK_STATUS_OPTS,'Applied')}</td>
     <td style="padding:4px 6px"><input type="date" data-row="${id}" data-field="Date Applied" value="${today}" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;border-radius:4px;padding:5px 6px;font-size:12px;outline:none"></td>
-    <td style="padding:4px 6px">${bulkCellInput('Job URL', id, 'https://…')}</td>
-    <td style="padding:4px 6px">${bulkCellInput('Notes', id, '')}</td>
-    <td style="padding:4px 4px"><button class="btn-danger btn-sm" onclick="removeBulkRow(${id})">✕</button></td>
-  `;
+    <td style="padding:4px 6px">${bulkCellInput('Job URL',id,'https://…')}</td>
+    <td style="padding:4px 6px">${bulkCellInput('Notes',id,'')}</td>
+    <td style="padding:4px 4px"><button class="btn-danger btn-sm" onclick="removeBulkRow(${id})">✕</button></td>`;
   document.getElementById('bulk-tbody').appendChild(tr);
 }
-
-function removeBulkRow(id) {
-  const el = document.getElementById('bulk-row-' + id);
-  if (el) el.remove();
+function removeBulkRow(id){const el=document.getElementById('bulk-row-'+id);if(el)el.remove();}
+function openBulk(){bulkRowCount=0;document.getElementById('bulk-tbody').innerHTML='';document.getElementById('bulk-company').value='';addBulkRow();document.getElementById('bulk-overlay').classList.add('open');}
+function closeBulk(){document.getElementById('bulk-overlay').classList.remove('open');}
+function maybeBulkClose(e){if(e.target===document.getElementById('bulk-overlay'))closeBulk();}
+function saveBulk(){
+  const company=document.getElementById('bulk-company').value.trim();
+  if(!company){alert('Company is required.');return;}
+  const newRows=[];
+  document.querySelectorAll('#bulk-tbody tr').forEach(tr=>{
+    const get=f=>{const el=tr.querySelector(`[data-field="${f}"]`);return el?el.value.trim():'';};
+    const role=get('Role'); if(!role) return;
+    newRows.push({Company:company,Role:role,'Job URL':get('Job URL'),Location:get('Location'),
+      'Work Mode':get('Work Mode'),'Date Applied':get('Date Applied'),'Referral Contact':'',
+      Status:get('Status'),'Date Phone Screen':'','Date Technical Screen':'',
+      'Date Onsite / Final Round':'','Date Offer':'','Date Decision':'','Offer Amount':'',
+      Decision:'','Rejection Stage':'',Notes:get('Notes')});
+  });
+  if(!newRows.length){alert('Add at least one role.');return;}
+  rows.push(...newRows); saveRows(); closeBulk(); render();
 }
 
-function openBulk() {
-  bulkRowCount = 0;
-  document.getElementById('bulk-tbody').innerHTML = '';
-  document.getElementById('bulk-company').value = '';
-  addBulkRow();
-  document.getElementById('bulk-overlay').classList.add('open');
+// --- Tabs ---
+function switchTab(tab) {
+  activeTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-btn-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='pipeline' && sankeyDirty) renderSankey();
 }
 
-function closeBulk() { document.getElementById('bulk-overlay').classList.remove('open'); }
-function maybeBulkClose(e) { if (e.target === document.getElementById('bulk-overlay')) closeBulk(); }
+// --- Sankey ---
+const STAGE_NAMES = ['Applications','Phone Screen','Technical','Onsite','Offer'];
+const STAGE_SET = new Set(STAGE_NAMES);
 
-function saveBulk() {
-  const company = document.getElementById('bulk-company').value.trim();
-  if (!company) { alert('Company is required.'); return; }
-
-  const newRows = [];
-  const trs = document.querySelectorAll('#bulk-tbody tr');
-  for (const tr of trs) {
-    const get = field => {
-      const el = tr.querySelector(`[data-field="${field}"]`);
-      return el ? el.value.trim() : '';
-    };
-    const role = get('Role');
-    if (!role) continue;
-    newRows.push({
-      Company: company, Role: role,
-      'Job URL': get('Job URL'), Location: get('Location'),
-      'Work Mode': get('Work Mode'), 'Date Applied': get('Date Applied'),
-      'Referral Contact': '', Status: get('Status'),
-      'Date Phone Screen': '', 'Date Technical Screen': '',
-      'Date Onsite / Final Round': '', 'Date Offer': '',
-      'Date Decision': '', 'Offer Amount': '', Decision: '',
-      'Rejection Stage': '', Notes: get('Notes')
-    });
+function getAppLevel(row) {
+  if (row.Status==='Rejected') {
+    const rs=(row['Rejection Stage']||'').toLowerCase();
+    if(rs.includes('offer')) return 4;
+    if(rs.includes('onsite')||rs.includes('final')) return 3;
+    if(rs.includes('technical')||rs.includes('tech')) return 2;
+    if(rs.includes('phone')) return 1;
+    if(row['Date Offer']) return 4;
+    if(row['Date Onsite / Final Round']) return 3;
+    if(row['Date Technical Screen']) return 2;
+    if(row['Date Phone Screen']) return 1;
+    return 0;
   }
-
-  if (newRows.length === 0) { alert('Add at least one role.'); return; }
-  rows.push(...newRows);
-  saveRows();
-  closeBulk();
-  render();
+  return {'Referral Requested':0,'Applied':0,'Ghosted':0,'Withdrawn':0,
+          'Phone Screen':1,'Technical':2,'Onsite':3,'Offer':4}[row.Status]??0;
 }
+
+function getExitLabel(row, level) {
+  if(row.Status==='Rejected') return level===0?'Rejected Early':`Rejected at ${STAGE_NAMES[level]}`;
+  if(row.Status==='Withdrawn') return 'Withdrawn';
+  if(row.Status==='Ghosted') return 'Ghosted';
+  if(row.Status==='Offer') {
+    if(row.Decision==='Accepted') return 'Accepted';
+    if(row.Decision==='Declined') return 'Declined';
+    return 'Offer Pending';
+  }
+  return `Active: ${STAGE_NAMES[level]}`;
+}
+
+function buildSankeyData() {
+  const flows={};
+  const addFlow=(src,tgt)=>{const k=`${src}||${tgt}`;flows[k]=(flows[k]||0)+1;};
+  for(const row of rows) {
+    const level=getAppLevel(row);
+    const exit=getExitLabel(row,level);
+    for(let i=0;i<level;i++) addFlow(STAGE_NAMES[i],STAGE_NAMES[i+1]);
+    addFlow(STAGE_NAMES[level],exit);
+  }
+  const nodeSet=new Set();
+  for(const k of Object.keys(flows)){const[s,t]=k.split('||');nodeSet.add(s);nodeSet.add(t);}
+  const usedStages=STAGE_NAMES.filter(n=>nodeSet.has(n));
+  const terminals=[...nodeSet].filter(n=>!STAGE_SET.has(n));
+  const allNodes=[...usedStages,...terminals];
+  const idx={}; allNodes.forEach((n,i)=>idx[n]=i);
+  return {
+    nodes: allNodes.map(name=>({name})),
+    links: Object.entries(flows).map(([k,value])=>{const[s,t]=k.split('||');return{source:idx[s],target:idx[t],value};})
+  };
+}
+
+function nodeColor(name) {
+  if(name==='Applications') return '#1f3a5f';
+  if(name==='Phone Screen') return '#3b2a6e';
+  if(name==='Technical') return '#42200680';
+  if(name==='Onsite') return '#422006';
+  if(name==='Offer') return '#14532d';
+  if(name==='Accepted') return '#166534';
+  if(name==='Declined') return '#78350f';
+  if(name==='Offer Pending') return '#1e3a5f';
+  if(name.startsWith('Active:')) return '#0d3040';
+  if(name.includes('Rejected')||name==='Ghosted') return '#450a0a';
+  if(name==='Withdrawn') return '#1c1c1c';
+  return '#21262d';
+}
+
+function linkStroke(d) {
+  const t=d.target.name||'';
+  if(t.includes('Rejected')||t==='Ghosted'||t==='Withdrawn') return '#f87171';
+  if(t==='Accepted') return '#4ade80';
+  if(t==='Declined') return '#fb923c';
+  if(t.startsWith('Active:')||t==='Offer Pending') return '#79c0ff';
+  return '#58a6ff';
+}
+
+function renderSankey() {
+  sankeyDirty=false;
+  const emptyEl=document.getElementById('sankey-empty');
+  const svg=d3.select('#sankey-svg');
+  svg.selectAll('*').remove();
+  if(!rows.length){emptyEl.style.display='';return;}
+  emptyEl.style.display='none';
+
+  const data=buildSankeyData();
+  const wrap=document.getElementById('sankey-wrap');
+  const W=Math.max(640, wrap.clientWidth-48);
+  // Height: enough room for all terminal nodes on the right column
+  const termCount=data.nodes.filter(n=>!STAGE_SET.has(n.name)).length;
+  const H=Math.max(320, termCount*56+80);
+  const mr=200, ml=10, mt=16, mb=16;
+
+  svg.attr('width',W).attr('height',H+mt+mb);
+  const g=svg.append('g').attr('transform',`translate(${ml},${mt})`);
+
+  const sankey=d3.sankey().nodeWidth(18).nodePadding(14)
+    .extent([[0,0],[W-ml-mr,H]]);
+  const {nodes,links}=sankey({
+    nodes:data.nodes.map(d=>({...d})),
+    links:data.links.map(d=>({...d}))
+  });
+
+  // Links
+  g.append('g').selectAll('path').data(links).join('path')
+    .attr('class','sankey-link')
+    .attr('d',d3.sankeyLinkHorizontal())
+    .attr('stroke-width',d=>Math.max(1,d.width))
+    .style('stroke',d=>linkStroke(d))
+    .append('title').text(d=>`${d.source.name} → ${d.target.name}: ${d.value}`);
+
+  // Node rects
+  const node=g.append('g').selectAll('g').data(nodes).join('g');
+  node.append('rect')
+    .attr('x',d=>d.x0).attr('y',d=>d.y0)
+    .attr('width',d=>d.x1-d.x0).attr('height',d=>Math.max(1,d.y1-d.y0))
+    .style('fill',d=>nodeColor(d.name)).style('stroke','#30363d')
+    .append('title').text(d=>`${d.name}: ${d.value}`);
+
+  // Labels
+  node.append('text')
+    .attr('x',d=>d.sourceLinks.length===0?d.x0-8:d.x1+8)
+    .attr('y',d=>(d.y0+d.y1)/2).attr('dy','0.35em')
+    .attr('text-anchor',d=>d.sourceLinks.length===0?'end':'start')
+    .style('fill','#c9d1d9').style('font-size','12px')
+    .style('font-family','-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif')
+    .text(d=>`${d.name} (${d.value})`);
+}
+
+window.addEventListener('resize',()=>{if(activeTab==='pipeline') renderSankey();});
 
 // --- Init ---
-rows = loadRows();
+rows=loadRows();
 render();
 </script>
 </body>
